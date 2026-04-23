@@ -3,7 +3,10 @@ import json
 import math
 import os
 import re
-import sqlite3
+try:
+    import sqlite3
+except Exception:  # pragma: no cover - Vercel runtime may not expose sqlite
+    sqlite3 = None
 import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -159,6 +162,8 @@ def unwrap_api_data(payload):
 
 
 def init_db():
+    if sqlite3 is None:
+        raise RuntimeError("sqlite is unavailable in this runtime")
     DATA_DIR.mkdir(exist_ok=True)
     with sqlite3.connect(DB_PATH) as conn:
         conn.execute(
@@ -199,12 +204,16 @@ def init_db():
 
 
 def db_rows(query, params=()):
+    if sqlite3 is None:
+        raise RuntimeError("sqlite is unavailable in this runtime")
     with sqlite3.connect(DB_PATH) as conn:
         conn.row_factory = sqlite3.Row
         return [dict(row) for row in conn.execute(query, params).fetchall()]
 
 
 def db_execute(query, params=()):
+    if sqlite3 is None:
+        raise RuntimeError("sqlite is unavailable in this runtime")
     with sqlite3.connect(DB_PATH) as conn:
         conn.execute(query, params)
 

@@ -10,6 +10,11 @@ const state = {
   manualCount: false,
 };
 
+const STORAGE_KEYS = {
+  paperTrades: "tweetquant.paperTrades.v1",
+  orderDrafts: "tweetquant.orderDrafts.v1",
+};
+
 const els = {
   sourceBadge: document.getElementById("sourceBadge"),
   liveSummary: document.getElementById("liveSummary"),
@@ -59,6 +64,32 @@ function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
 
+function useLocalPersistence() {
+  const host = window.location.hostname;
+  return host !== "127.0.0.1" && host !== "localhost";
+}
+
+function readStoredItems(key) {
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeStoredItems(key, items) {
+  window.localStorage.setItem(key, JSON.stringify(items));
+}
+
+function upsertStoredItem(key, item) {
+  const items = readStoredItems(key);
+  items.unshift(item);
+  writeStoredItems(key, items.slice(0, 100));
+}
+
 function fmtPct(value, digits = 1) {
   if (!Number.isFinite(value)) return "-";
   return `${(value * 100).toFixed(digits)}%`;
@@ -99,6 +130,10 @@ function fmtNum(value, digits = 0) {
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
   });
+}
+
+function uid() {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
 function parseDate(value) {
@@ -643,12 +678,34 @@ async function resolveMarket() {
 
 async function savePaperTrade() {
   try {
-    const response = await fetch("/api/paper-trades", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(simulationBody()),
-    });
-    if (!response.ok) throw new Error("request failed");
+    if (useLocalPersistence()) {
+      if (!state.simulation) throw new Error("当前没有可保存的模拟结果");
+      upsertStoredItem(STORAGE_KEYS.paperTrades, {
+        id: uid(),
+        createdAt: new Date().toISOString(),
+        marketId: selectedMarket()?.id || "",
+        marketTitle: selectedMarket()?.title || "",
+        strategyType: state.simulation.strategyType,
+        selectedOutcomes: selectedOutcomes().map((item) => ({
+          label: item.label,
+          tokenId: item.tokenId,
+        })),
+        budget: state.simulation.budget,
+        shares: state.simulation.shares,
+        cost: state.simulation.cost,
+        coverProbability: state.simulation.coverProbability,
+        edge: state.simulation.edge,
+        riskState: state.simulation.riskState,
+        notes: "",
+      });
+    } else {
+      const response = await fetch("/api/paper-trades", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(simulationBody()),
+      });
+      if (!response.ok) throw new Error("request failed");
+    }
     showToast("模拟记录已保存");
     await loadPaperTrades();
   } catch (error) {
@@ -658,13 +715,33 @@ async function savePaperTrade() {
 
 async function saveOrderDraft() {
   try {
-    const response = await fetch("/api/order-drafts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(simulationBody()),
-    });
-    if (!response.ok) throw new Error("request failed");
-    showToast("下单建议已生成，未提交实盘");
+    if (useLocalPersistence()) {
+      if (!state.simulation) throw new Error("当前没有可生成的下单建议");
+      upsertStoredItem(STORAGE_KEYS.orderDrafts, {
+        id: uid(),
+        createdAt: new Date().toISOString(),
+        marketId: selectedMarket()?.id || "",
+        marketTitle: selectedMarket()?.title || "",
+        side: "BUY",
+        selectedOutcomes: selectedOutcomes().map((item) => ({
+          label: item.label,
+          tokenId: item.tokenId,
+        })),
+        budget: state.simulation.budget,
+        limitOrders: state.simulation.orders || [],
+        status: "draft",
+        notes: "Manual confirmation required. No live order was submitted.",
+      });
+      showToast("下单建议已生成，并保存在当前浏览器");
+    } else {
+      const response = await fetch("/api/order-drafts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(simulationBody()),
+      });
+      if (!response.ok) throw new Error("request failed");
+      showToast("下单建议已生成，未提交实盘");
+    }
   } catch (error) {
     showToast(`草稿失败：${error.message}`);
   }
@@ -672,9 +749,16 @@ async function saveOrderDraft() {
 
 async function loadPaperTrades() {
   try {
-    const response = await fetch("/api/paper-trades");
-    const payload = await response.json();
-    renderPaperTrades(payload.items || []);
+    if (useLocalPersistence()) {
+      const items = readStoredItems(STORAGE_KEYS.paperTrades).sort((a, b) =>
+        String(b.createdAt || "").localeCompare(String(a.createdAt || "")),
+      );
+      renderPaperTrades(items);
+    } else {
+      const response = await fetch("/api/paper-trades");
+      const payload = await response.json();
+      renderPaperTrades(payload.items || []);
+    }
   } catch (error) {
     showToast(`模拟交易记录加载失败：${error.message}`);
   }
