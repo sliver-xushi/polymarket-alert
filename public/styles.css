@@ -195,6 +195,10 @@ button:disabled {
   min-width: 0;
 }
 
+.help-btn {
+  color: var(--ink);
+}
+
 .workspace {
   display: grid;
   grid-template-columns: 220px minmax(0, 1fr) 252px;
@@ -953,6 +957,112 @@ input[type="checkbox"] {
   font-weight: 850;
 }
 
+.modal-shell {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+}
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(2, 5, 6, 0.72);
+  backdrop-filter: blur(10px);
+}
+
+.modal-panel {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  bottom: 18px;
+  width: min(760px, calc(100vw - 36px));
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(0, 229, 255, 0.16);
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(0, 229, 255, 0.045), rgba(0, 229, 255, 0.015)),
+    rgba(7, 13, 15, 0.98);
+  box-shadow: 0 28px 64px rgba(0, 0, 0, 0.42);
+}
+
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.modal-header h2 {
+  margin: 4px 0 0;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.modal-close {
+  min-width: 48px;
+}
+
+.modal-body {
+  flex: 1;
+  overflow: auto;
+  padding: 14px 16px 18px;
+}
+
+.doc-section + .doc-section {
+  margin-top: 16px;
+}
+
+.doc-section h3 {
+  margin: 0 0 8px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.doc-section p,
+.doc-section li {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 12px;
+  line-height: 1.62;
+}
+
+.doc-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.doc-card {
+  padding: 10px 11px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(11, 20, 22, 0.88);
+}
+
+.doc-card strong {
+  display: block;
+  margin-bottom: 5px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 820;
+}
+
+.doc-steps,
+.doc-list {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.doc-steps li + li,
+.doc-list li + li {
+  margin-top: 6px;
+}
+
 @media (max-width: 1380px) {
   body {
     min-width: 0;
@@ -1000,5 +1110,14 @@ input[type="checkbox"] {
   .control-band,
   .summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .modal-panel {
+    inset: 10px;
+    width: auto;
+  }
+
+  .doc-grid {
+    grid-template-columns: 1fr;
   }
 }

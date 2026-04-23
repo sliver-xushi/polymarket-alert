@@ -16,6 +16,36 @@ python3 server.py
 http://127.0.0.1:8787
 ```
 
+如果你想要“改完代码自动重启，浏览器一直刷新同一个地址”，可以用开发守护模式：
+
+```bash
+./run-dev.command
+```
+
+或者：
+
+```bash
+python3 dev_watch.py
+```
+
+它会持续监控 `server.py`、`public/`、`api/`，有改动就自动重启本地服务，访问地址始终是：
+
+```text
+http://127.0.0.1:8787
+```
+
+如果你想让它在你的 Mac 上长期常驻、开机自启，可以执行：
+
+```bash
+python3 install_dev_service.py
+```
+
+卸载：
+
+```bash
+python3 uninstall_dev_service.py
+```
+
 ## Vercel 部署
 
 这个项目已经适配 Vercel：

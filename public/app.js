@@ -18,6 +18,10 @@ const STORAGE_KEYS = {
 const els = {
   sourceBadge: document.getElementById("sourceBadge"),
   liveSummary: document.getElementById("liveSummary"),
+  helpBtn: document.getElementById("helpBtn"),
+  helpModal: document.getElementById("helpModal"),
+  helpBackdrop: document.getElementById("helpBackdrop"),
+  closeHelpBtn: document.getElementById("closeHelpBtn"),
   refreshBtn: document.getElementById("refreshBtn"),
   marketCount: document.getElementById("marketCount"),
   marketNotice: document.getElementById("marketNotice"),
@@ -62,6 +66,11 @@ const els = {
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
+}
+
+function setHelpOpen(open) {
+  els.helpModal.hidden = !open;
+  document.body.style.overflow = open ? "hidden" : "";
 }
 
 function useLocalPersistence() {
@@ -819,6 +828,9 @@ function onCountInput() {
 }
 
 els.refreshBtn.addEventListener("click", () => loadMarkets(true));
+els.helpBtn.addEventListener("click", () => setHelpOpen(true));
+els.closeHelpBtn.addEventListener("click", () => setHelpOpen(false));
+els.helpBackdrop.addEventListener("click", () => setHelpOpen(false));
 els.resolveMarketBtn.addEventListener("click", resolveMarket);
 els.marketUrlInput.addEventListener("keydown", (event) => {
   if (event.key === "Enter") resolveMarket();
@@ -830,6 +842,9 @@ els.countInput.addEventListener("input", onCountInput);
 els.budgetInput.addEventListener("input", queueRecompute);
 els.bufferInput.addEventListener("input", queueRecompute);
 els.strategyInput.addEventListener("change", queueRecompute);
+window.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !els.helpModal.hidden) setHelpOpen(false);
+});
 
 loadMarkets(false);
 loadPaperTrades();

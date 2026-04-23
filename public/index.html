@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>TweetQuant Desk</title>
-    <link rel="stylesheet" href="/styles.css?v=20260423c" />
+    <link rel="stylesheet" href="/styles.css?v=20260423d" />
   </head>
   <body>
     <div class="app-shell">
@@ -17,6 +17,7 @@
           </div>
         </div>
         <div class="topbar-actions">
+          <button id="helpBtn" class="ghost-btn help-btn" type="button">使用说明</button>
           <div id="liveSummary" class="status-pill">等待数据</div>
           <div id="sourceBadge" class="status-pill">加载中</div>
           <button id="refreshBtn" class="primary-btn" type="button">刷新数据</button>
@@ -205,6 +206,145 @@
     </div>
 
     <div id="toast" class="toast" hidden></div>
-    <script src="/app.js?v=20260423c"></script>
+    <div id="helpModal" class="modal-shell" hidden>
+      <div id="helpBackdrop" class="modal-backdrop"></div>
+      <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+        <div class="modal-header">
+          <div>
+            <div class="eyebrow">Guide</div>
+            <h2 id="helpTitle">产品使用说明</h2>
+          </div>
+          <button id="closeHelpBtn" class="ghost-btn modal-close" type="button">关闭</button>
+        </div>
+
+        <div class="modal-body">
+          <section class="doc-section">
+            <h3>这个产品是做什么的</h3>
+            <p>
+              这是一个给 Polymarket 马斯克发帖次数市场做半自动分析的交易面板。它不会替你自动实盘下单，
+              重点是帮你快速看清：现在市场怎么报价、模型觉得哪些区间更合理、组合建仓后大概值不值得做。
+            </p>
+          </section>
+
+          <section class="doc-section">
+            <h3>最简单的使用顺序</h3>
+            <ol class="doc-steps">
+              <li>先在左侧选一个市场，确认周期、成交额、流动性和剩余时间。</li>
+              <li>看 `xtracker count`，这是当前抓到的马斯克发帖计数；如果自动抓取失败，可以手动填。</li>
+              <li>输入你的 `预算金额` 和 `安全边际`，再选择一种 `建仓策略`。</li>
+              <li>在表格里对比 `市场概率`、`模型概率` 和 `Edge`，勾选你准备关注的几个区间。</li>
+              <li>看右侧的 `组合建仓模拟`，决定是直接建仓、挂单等待，还是先观察。</li>
+            </ol>
+          </section>
+
+          <section class="doc-section">
+            <h3>核心字段怎么理解</h3>
+            <div class="doc-grid">
+              <article class="doc-card">
+                <strong>xtracker count</strong>
+                <p>当前已统计到的马斯克发帖数，是模型判断最重要的实时输入之一。</p>
+              </article>
+              <article class="doc-card">
+                <strong>市场概率</strong>
+                <p>市场当前报价隐含出来的概率，代表别人现在大概愿意按什么价格交易。</p>
+              </article>
+              <article class="doc-card">
+                <strong>模型概率</strong>
+                <p>系统结合当前计数、时间进度和区间分布后，算出来的“你这边的判断”。</p>
+              </article>
+              <article class="doc-card">
+                <strong>Edge</strong>
+                <p>简单理解就是“模型觉得值不值”减去“市场要你付出的价格”再减去安全边际，越高越值得看。</p>
+              </article>
+              <article class="doc-card">
+                <strong>组合成本</strong>
+                <p>你勾选的几个区间一起买入时，大概需要花掉多少成本。</p>
+              </article>
+              <article class="doc-card">
+                <strong>命中概率</strong>
+                <p>你勾选的这些区间加起来，被模型命中的总概率。</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="doc-section">
+            <h3>两种建仓策略的区别</h3>
+            <div class="doc-grid">
+              <article class="doc-card">
+                <strong>Settlement Edge</strong>
+                <p>
+                  偏结算思路。它更关注“如果我一直拿到结算，这笔组合整体值不值”，适合想做区间覆盖和结算收益的人。
+                </p>
+              </article>
+              <article class="doc-card">
+                <strong>Convergence Edge</strong>
+                <p>
+                  偏波段思路。它更关注“市场价格会不会往模型判断靠拢”，适合做挂单、等回落、做中间波动的人。
+                </p>
+              </article>
+            </div>
+          </section>
+
+          <section class="doc-section">
+            <h3>右侧建议怎么用</h3>
+            <div class="doc-grid">
+              <article class="doc-card">
+                <strong>结算建议</strong>
+                <p>站在“拿到到期结算”的角度看，这组区间是适合直接做、轻仓做，还是应该跳过。</p>
+              </article>
+              <article class="doc-card">
+                <strong>挂单建议</strong>
+                <p>站在“现在这个 Ask 要不要吃”的角度看，是否更适合挂更低价格等成交。</p>
+              </article>
+              <article class="doc-card">
+                <strong>波段建议</strong>
+                <p>站在短线价格波动角度看，是否值得先观察、等回落，或者只做交易价差。</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="doc-section">
+            <h3>建议状态怎么理解</h3>
+            <div class="doc-grid">
+              <article class="doc-card">
+                <strong>直接建仓 / 小仓试单</strong>
+                <p>说明模型判断和市场价格差得还可以，值得开始参与，但也不代表没有风险。</p>
+              </article>
+              <article class="doc-card">
+                <strong>限价挂单 / 等待回落</strong>
+                <p>说明方向可能没错，但当前卖价偏贵，直接追进去不划算，更适合等更好的成交价。</p>
+              </article>
+              <article class="doc-card">
+                <strong>波段观察 / 跳过</strong>
+                <p>说明更适合先看，不适合按当前价格做结算；如果 Edge 很差，通常直接跳过更稳。</p>
+              </article>
+              <article class="doc-card">
+                <strong>盘口待刷新</strong>
+                <p>不是这个区间一定没机会，而是当前这次刷新没有拿到可靠盘口，先别按这条数据下判断。</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="doc-section">
+            <h3>什么时候更要谨慎</h3>
+            <ul class="doc-list">
+              <li>市场深度很薄，但你预算很大，容易出现滑点。</li>
+              <li>组合成本已经明显高于命中概率，说明“买得太贵”。</li>
+              <li>离结算时间很近，但 xtracker 计数还在快速变化，模型会更容易被短时波动打乱。</li>
+              <li>你选了太多边缘区间，表面上覆盖更广，实际上很可能把成本堆高。</li>
+            </ul>
+          </section>
+
+          <section class="doc-section">
+            <h3>一个实用心法</h3>
+            <p>
+              不要把这个面板当成“自动赚钱按钮”，它更像是一个价格和概率的对照尺。你真正要做的，是找出
+              “市场暂时给错价” 的地方，而不是看到有概率就买。先看价格，再看概率，最后再决定要不要出手。
+            </p>
+          </section>
+        </div>
+      </section>
+    </div>
+    <script src="/app.js?v=20260423d"></script>
   </body>
 </html>
