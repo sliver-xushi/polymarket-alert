@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>TweetQuant Desk</title>
+    <link rel="stylesheet" href="/styles.css?v=20260423c" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand-lockup">
+          <span class="brand-mark" aria-hidden="true"></span>
+          <div>
+            <div class="eyebrow">Polymarket Desk</div>
+            <h1>TweetQuant</h1>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <div id="liveSummary" class="status-pill">等待数据</div>
+          <div id="sourceBadge" class="status-pill">加载中</div>
+          <button id="refreshBtn" class="primary-btn" type="button">刷新数据</button>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <aside class="market-panel">
+          <div class="panel-header">
+            <h2>市场列表</h2>
+            <span id="marketCount">0</span>
+          </div>
+          <div id="marketNotice" class="market-notice" hidden></div>
+          <div class="resolve-box">
+            <input id="marketUrlInput" type="text" placeholder="粘贴 Polymarket 市场 URL / slug" />
+            <button id="resolveMarketBtn" class="secondary-btn" type="button">导入</button>
+          </div>
+          <div id="marketList" class="market-list"></div>
+        </aside>
+
+        <section class="main-panel">
+          <div class="market-hero">
+            <div>
+              <div id="periodLabel" class="eyebrow">未选择市场</div>
+              <h2 id="marketTitle">等待市场数据</h2>
+            </div>
+            <div class="metric-row compact">
+              <div class="metric">
+                <span>成交额</span>
+                <strong id="volumeMetric">-</strong>
+              </div>
+              <div class="metric">
+                <span>流动性</span>
+                <strong id="liquidityMetric">-</strong>
+              </div>
+              <div class="metric">
+                <span>剩余时间</span>
+                <strong id="remainingMetric">-</strong>
+              </div>
+            </div>
+          </div>
+
+          <section class="control-band">
+            <label>
+              <span>xtracker count</span>
+              <input id="countInput" type="number" min="0" placeholder="自动获取中" />
+            </label>
+            <label>
+              <span>预算金额（USDC）</span>
+              <input id="budgetInput" type="number" min="1" value="100" />
+            </label>
+            <label>
+              <span>安全边际（%）</span>
+              <input id="bufferInput" type="number" min="0" step="0.5" value="5" />
+            </label>
+            <label>
+              <span>建仓策略</span>
+              <select id="strategyInput">
+                <option>Settlement Edge</option>
+                <option>Convergence Edge</option>
+              </select>
+            </label>
+          </section>
+
+          <section class="summary-grid">
+            <div class="summary-tile">
+              <span>计数来源</span>
+              <strong id="trackerSourceMetric">-</strong>
+            </div>
+            <div class="summary-tile">
+              <span>预测值</span>
+              <strong id="projectionMetric">-</strong>
+            </div>
+            <div class="summary-tile">
+              <span>风险等级</span>
+              <strong id="riskMetric">-</strong>
+            </div>
+            <div class="summary-tile">
+              <span>组合成本</span>
+              <strong id="basketCostMetric">-</strong>
+            </div>
+            <div class="summary-tile">
+              <span>命中概率</span>
+              <strong id="coverMetric">-</strong>
+            </div>
+            <div class="summary-tile">
+              <span>Edge</span>
+              <strong id="edgeMetric">-</strong>
+            </div>
+          </section>
+
+          <section class="table-section">
+            <div class="section-header">
+              <h2>区间价格与概率分析</h2>
+              <div id="selectedCount" class="soft-pill">0 已选</div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th></th>
+                    <th><span class="hint" aria-label="最终 xtracker 计数可能落入的发帖数量范围。" data-tip="最终 xtracker 计数可能落入的发帖数量范围。">区间</span></th>
+                    <th><span class="hint" aria-label="当前最高买入价。你如果卖出这个 Yes 仓位，主要看 Bid。" data-tip="当前最高买入价。你如果卖出这个 Yes 仓位，主要看 Bid。">买价(BID)</span></th>
+                    <th><span class="hint" aria-label="当前最低卖出价。你如果立刻买入这个 Yes，主要看 Ask。0.020 代表每份 0.02 USDC。" data-tip="当前最低卖出价。你如果立刻买入这个 Yes，主要看 Ask。0.020 代表每份 0.02 USDC。">卖价(ASK)</span></th>
+                    <th><span class="hint" aria-label="买卖价差，等于 Ask - Bid。越小代表交易摩擦越低。" data-tip="买卖价差，等于 Ask - Bid。越小代表交易摩擦越低。">价差（spread）</span></th>
+                    <th><span class="hint" aria-label="盘口深度，表示当前价格附近大概有多少资金可成交。越大越不容易滑点。" data-tip="盘口深度，表示当前价格附近大概有多少资金可成交。越大越不容易滑点。">深度（depth）</span></th>
+                    <th><span class="hint" aria-label="市场当前隐含概率，优先按 Polymarket 显示概率或中间价估算。低于 1% 会显示 <1%。" data-tip="市场当前隐含概率，优先按 Polymarket 显示概率或中间价估算。低于 1% 会显示 <1%。">市场概率</span></th>
+                    <th><span class="hint" aria-label="系统根据 xtracker 计数、时间进度和市场分布估算的命中概率。" data-tip="系统根据 xtracker 计数、时间进度和市场分布估算的命中概率。">模型概率</span></th>
+                    <th><span class="hint" aria-label="单区间优势：模型概率 - 实际买入成本 Ask - 安全边际。正数越大越有吸引力。" data-tip="单区间优势：模型概率 - 实际买入成本 Ask - 安全边际。正数越大越有吸引力。">Edge</span></th>
+                    <th><span class="hint" aria-label="系统对这个单一区间的初步建议：直接建仓、限价挂单、波段观察、等待回落或跳过。" data-tip="系统对这个单一区间的初步建议：直接建仓、限价挂单、波段观察、等待回落或跳过。">状态</span></th>
+                  </tr>
+                </thead>
+                <tbody id="outcomeRows"></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <aside class="trade-panel">
+          <section class="tool-card">
+            <div class="section-header">
+              <h2>组合建仓模拟</h2>
+              <span id="simulationStatus" class="soft-pill">等待选择</span>
+            </div>
+            <dl class="basket-list">
+              <div>
+                <dt>结算建议</dt>
+                <dd id="settlementAdviceValue">-</dd>
+              </div>
+              <div>
+                <dt>挂单建议</dt>
+                <dd id="limitAdviceValue">-</dd>
+              </div>
+              <div>
+                <dt>波段建议</dt>
+                <dd id="swingAdviceValue">-</dd>
+              </div>
+              <div>
+                <dt>每区间买入份额</dt>
+                <dd id="sharesValue">-</dd>
+              </div>
+              <div>
+                <dt>预计投入</dt>
+                <dd id="costValue">-</dd>
+              </div>
+              <div>
+                <dt>命中后预估收益</dt>
+                <dd id="profitValue">-</dd>
+              </div>
+              <div>
+                <dt>最大可能亏损</dt>
+                <dd id="lossValue">-</dd>
+              </div>
+              <div>
+                <dt>结算预期收益</dt>
+                <dd id="evValue">-</dd>
+              </div>
+              <div>
+                <dt>目标止盈价</dt>
+                <dd id="targetExitValue">-</dd>
+              </div>
+              <div>
+                <dt>目标挂单成本</dt>
+                <dd id="targetEntryValue">-</dd>
+              </div>
+              <div>
+                <dt>波段预期收益</dt>
+                <dd id="swingValue">-</dd>
+              </div>
+            </dl>
+            <div class="action-stack">
+              <button id="paperBtn" class="primary-btn" type="button">保存模拟记录</button>
+              <button id="draftBtn" class="secondary-btn" type="button">生成下单建议</button>
+            </div>
+          </section>
+
+          <section class="tool-card grow">
+            <div class="section-header">
+              <h2>模拟交易记录</h2>
+              <button id="reloadTradesBtn" class="ghost-btn" type="button">刷新记录</button>
+            </div>
+            <div id="paperTradeList" class="record-list"></div>
+          </section>
+        </aside>
+      </main>
+    </div>
+
+    <div id="toast" class="toast" hidden></div>
+    <script src="/app.js?v=20260423c"></script>
+  </body>
+</html>
